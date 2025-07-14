@@ -1,0 +1,252 @@
+# Hanzo Mainnet
+server {
+    listen 8080;
+    server_name api.hanzo.network hanzonet;
+
+    set $bcid 2d7jR9hMfmPdifj4DyB4BziRuKJi8Tyv3vqhgfEswMaE5b1HG;
+
+    location / {
+        proxy_pass http://avalanche/ext/bc/$bcid/$rpc_or_ws;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host localhost;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        allow all;
+    }
+
+    location /rpc {
+        proxy_pass http://avalanche/ext/bc/$bcid/rpc;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host localhost;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        allow all;
+    }
+
+    location /ws {
+        proxy_pass http://avalanche/ext/bc/$bcid/ws;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host localhost;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        allow all;
+    }
+
+    location /ext {
+        proxy_pass http://avalanche/ext;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host localhost;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        allow all;
+    }
+}
+
+# Hanzo Mainnet Explorer API
+server {
+    listen 8082;
+    server_name api-explore.hanzo.network hanzonet;
+
+    proxy_hide_header Access-Control-Allow-Origin;
+    proxy_hide_header Access-Control-Allow-Methods;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+    add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+    add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+    location / {
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+
+            # Tell client that this pre-flight info is valid for 20 days
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+
+        if ($request_method = 'POST') {
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        }
+
+        if ($request_method = 'GET') {
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        }
+
+        proxy_http_version    1.1;
+        proxy_pass            http://blockscout_hanzonet;
+        proxy_set_header      Host "$host";
+        proxy_set_header      X-Real-IP "$remote_addr";
+        proxy_set_header      X-Forwarded-For "$proxy_add_x_forwarded_for";
+        proxy_set_header      X-Forwarded-Proto "$scheme";
+        proxy_set_header      Upgrade "$http_upgrade";
+        proxy_set_header      Connection $connection_upgrade;
+        proxy_cache_bypass    $http_upgrade;
+    }
+
+
+}
+
+# Hanzo Mainnet stats
+server {
+    listen 8083;
+    server_name stats.hanzo.network hanzonet;
+
+    proxy_hide_header Access-Control-Allow-Origin;
+    proxy_hide_header Access-Control-Allow-Methods;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+    add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+    add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+    location / {
+        if ($request_method = 'OPTIONS') {
+            # Custom headers and headers various browsers *should* be OK with but aren't
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+
+            # Tell client that this pre-flight info is valid for 20 days
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+
+        if ($request_method = 'POST') {
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        }
+
+        if ($request_method = 'GET') {
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        }
+
+        proxy_pass            http://blockscout_stats_hanzonet;
+        proxy_http_version    1.1;
+        proxy_set_header      Host "$host";
+        proxy_set_header      X-Real-IP "$remote_addr";
+        proxy_set_header      X-Forwarded-For "$proxy_add_x_forwarded_for";
+        proxy_set_header      X-Forwarded-Proto "$scheme";
+        proxy_set_header      Upgrade "$http_upgrade";
+        proxy_set_header      Connection $connection_upgrade;
+        proxy_cache_bypass    $http_upgrade;
+    }
+}
+
+# Hanzo Mainnet visualizer
+server {
+    listen 8084;
+    server_name viz.hanzo.network hanzonet;
+
+    proxy_hide_header Access-Control-Allow-Origin;
+    proxy_hide_header Access-Control-Allow-Methods;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+    add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+    add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+    location / {
+        if ($request_method = 'OPTIONS') {
+            # Custom headers and headers various browsers *should* be OK with but aren't
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+
+            # Tell client that this pre-flight info is valid for 20 days
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+
+        if ($request_method = 'POST') {
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        }
+
+        if ($request_method = 'GET') {
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        }
+
+        proxy_pass            http://blockscout_viz;
+        proxy_http_version    1.1;
+        proxy_set_header      Host "$host";
+        proxy_set_header      X-Real-IP "$remote_addr";
+        proxy_set_header      X-Forwarded-For "$proxy_add_x_forwarded_for";
+        proxy_set_header      X-Forwarded-Proto "$scheme";
+        proxy_set_header      Upgrade "$http_upgrade";
+        proxy_set_header      Connection $connection_upgrade;
+        proxy_cache_bypass    $http_upgrade;
+    }
+}
+
+# Hanzo Mainnet sigs
+server {
+    listen 8085;
+    server_name sig.hanzo.network hanzonet;
+
+    proxy_hide_header Access-Control-Allow-Origin;
+    proxy_hide_header Access-Control-Allow-Methods;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+    add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+    add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+    location / {
+        if ($request_method = 'OPTIONS') {
+            # Custom headers and headers various browsers *should* be OK with but aren't
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+
+            # Tell client that this pre-flight info is valid for 20 days
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+
+        if ($request_method = 'POST') {
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        }
+
+        if ($request_method = 'GET') {
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        }
+
+        proxy_pass            http://blockscout_sig;
+        proxy_http_version    1.1;
+        proxy_set_header      Host "$host";
+        proxy_set_header      X-Real-IP "$remote_addr";
+        proxy_set_header      X-Forwarded-For "$proxy_add_x_forwarded_for";
+        proxy_set_header      X-Forwarded-Proto "$scheme";
+        proxy_set_header      Upgrade "$http_upgrade";
+        proxy_set_header      Connection $connection_upgrade;
+        proxy_cache_bypass    $http_upgrade;
+    }
+}
+# HANZO Graph Admin
+server {
+    listen 8820;
+    server_name graph-admin.hanzo.network hanzonet;
+
+    auth_basic "Restricted Area";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+
+    location / {
+        proxy_pass http://graph_admin_hanzo;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host localhost;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        allow all;
+    }
+}
