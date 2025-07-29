@@ -22,7 +22,7 @@ server {
         }
 
         # Hanzo blockchain ID will be assigned when deployed
-        proxy_pass http://localhost:9650/ext/bc/HANZO_BLOCKCHAIN_ID/rpc;
+        proxy_pass http://localhost:9630/ext/bc/HANZO_BLOCKCHAIN_ID/rpc;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';

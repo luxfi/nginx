@@ -22,7 +22,7 @@ server {
             return 204;
         }
 
-        proxy_pass http://127.0.0.1:9650/ext/bc/QFAFyn1hh59mh7kokA55dJq5ywskF5A1yn8dDpLhmKApS6FP1/rpc;
+        proxy_pass http://127.0.0.1:9630/ext/bc/QFAFyn1hh59mh7kokA55dJq5ywskF5A1yn8dDpLhmKApS6FP1/rpc;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
