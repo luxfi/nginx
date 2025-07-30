@@ -1,8 +1,8 @@
-# ZOO Network Stats
+# ZOO Network Signature Provider
 server {
     listen 8080;
     listen [::]:8080;
-    server_name stats.zoo.network;
+    server_name sig.zoo.network;
     
     location / {
         if ($request_method = 'OPTIONS') {
@@ -19,7 +19,7 @@ server {
         add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
         add_header 'Access-Control-Allow-Headers' '*' always;
         
-        proxy_pass http://127.0.0.1:8263;
+        proxy_pass http://127.0.0.1:8261;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

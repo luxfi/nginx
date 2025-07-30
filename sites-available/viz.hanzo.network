@@ -1,12 +1,12 @@
-# ZOO Network Stats
+# Hanzo Network Visualizer  
 server {
     listen 8080;
     listen [::]:8080;
-    server_name stats.zoo.network;
+    server_name viz.hanzo.network;
     
     location / {
         if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' 'https://explore.zoo.network' always;
+            add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' '*' always;
             add_header 'Access-Control-Max-Age' 1728000;
@@ -15,11 +15,11 @@ server {
             return 204;
         }
         
-        add_header 'Access-Control-Allow-Origin' 'https://explore.zoo.network' always;
+        add_header 'Access-Control-Allow-Origin' 'https://explore.hanzo.network' always;
         add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
         add_header 'Access-Control-Allow-Headers' '*' always;
         
-        proxy_pass http://127.0.0.1:8263;
+        proxy_pass http://127.0.0.1:8450;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
