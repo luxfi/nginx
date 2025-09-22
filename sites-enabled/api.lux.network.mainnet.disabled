@@ -1,0 +1,228 @@
+# LUX Network API (C-Chain) - Mainnet with 21 validator nodes
+# Round-robin load balancing configuration
+
+# Define upstream backend servers (21 validator nodes)
+upstream lux_cchain_backends {
+    # Use least connections for better distribution
+    least_conn;
+    
+    # 21 validator nodes running on different ports
+    server 127.0.0.1:9650 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9651 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9652 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9653 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9654 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9655 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9656 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9657 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9658 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9659 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9660 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9661 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9662 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9663 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9664 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9665 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9666 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9667 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9668 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9669 max_fails=3 fail_timeout=30s weight=1;
+    server 127.0.0.1:9670 max_fails=3 fail_timeout=30s weight=1;
+    
+    # Enable keepalive connections to backend
+    keepalive 32;
+}
+
+# Health check upstream (for monitoring)
+upstream lux_health_backends {
+    least_conn;
+    server 127.0.0.1:9650;
+    server 127.0.0.1:9651;
+    server 127.0.0.1:9652;
+    keepalive 4;
+}
+
+# LUX Network API Server
+server {
+    listen 8080;
+    listen [::]:8080;
+    server_name api.lux.network rpc.lux.network;
+    
+    # Security headers
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options DENY;
+    add_header X-XSS-Protection "1; mode=block";
+    
+    # Rate limiting zones (defined in http context)
+    # limit_req_zone $binary_remote_addr zone=api_limit:10m rate=100r/s;
+    # limit_req_zone $binary_remote_addr zone=ws_limit:10m rate=20r/s;
+    
+    # Generic /ext location - proxies all extension APIs to luxd
+    location /ext/ {
+        # Rate limiting
+        # limit_req zone=api_limit burst=200 nodelay;
+        
+        proxy_pass http://lux_cchain_backends/ext/;
+        proxy_http_version 1.1;
+        
+        # Headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Support WebSocket upgrade
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Connection reuse
+        proxy_set_header Connection "";
+        
+        # CORS headers
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+        
+        # Handle preflight requests
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+        
+        # Timeout settings
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        
+        # Buffer settings
+        proxy_buffering on;
+        proxy_buffer_size 4k;
+        proxy_buffers 8 4k;
+        proxy_busy_buffers_size 8k;
+    }
+    
+    # C-Chain RPC (default for root path)
+    location / {
+        # Rate limiting for RPC
+        # limit_req zone=api_limit burst=100 nodelay;
+        
+        # CORS headers
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+
+        # Handle preflight requests
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+
+        # Proxy to C-Chain RPC endpoint through load balancer
+        proxy_pass http://lux_cchain_backends/ext/bc/C/rpc;
+        proxy_http_version 1.1;
+        
+        # WebSocket support
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Connection reuse
+        proxy_set_header Connection "";
+        
+        # Timeouts
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        
+        # Buffer settings
+        proxy_buffering on;
+        proxy_buffer_size 4k;
+        proxy_buffers 8 4k;
+        proxy_busy_buffers_size 8k;
+    }
+    
+    # WebSocket specific endpoint
+    location /ws {
+        # Rate limiting for WebSocket
+        # limit_req zone=ws_limit burst=50 nodelay;
+        
+        proxy_pass http://lux_cchain_backends/ext/bc/C/ws;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # WebSocket timeouts
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        
+        # CORS
+        add_header 'Access-Control-Allow-Origin' '*' always;
+    }
+    
+    # Health check endpoint
+    location /health {
+        access_log off;
+        
+        proxy_pass http://lux_health_backends/ext/health;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        
+        # Quick timeout for health checks
+        proxy_read_timeout 5s;
+        proxy_connect_timeout 5s;
+    }
+    
+    # Status page (internal only)
+    location /nginx_status {
+        stub_status on;
+        access_log off;
+        allow 127.0.0.1;
+        deny all;
+    }
+    
+    # Block access to hidden files
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+}
+
+# Redirect HTTP to HTTPS (when SSL is configured)
+server {
+    listen 80;
+    listen [::]:80;
+    server_name api.lux.network rpc.lux.network;
+    
+    # For now, just proxy to 8080
+    # When SSL is ready, change this to: return 301 https://$server_name$request_uri;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
